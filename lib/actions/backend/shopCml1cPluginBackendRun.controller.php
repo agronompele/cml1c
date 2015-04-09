@@ -2617,9 +2617,20 @@ SQL;
         if ($image = reset($this->data['map'][self::STAGE_IMAGE])) {
             $result = true;
             list($file, $product_id, $description) = $image;
-            if (!empty($this->data['base_path'])) {
+            if (!empty($this->data['base_path']) && !$this->isUrl($file)) {
                 $file = $this->data['base_path'].$file;
             }
+
+            //Agronom's code
+            if($this->isUrl($file)) {
+                $image_name = $this->getFileNameFromUrl($file);
+                $path = $this->plugin()->path($image_name);
+                $image_data = $this->getDataFromUrl($file);
+                $file = $image_name;
+
+                file_put_contents($path, $image_data);
+            }
+            //Agronom's code end
 
             if ($file && ($file = $this->extract($file)) && is_file($file)) {
                 if (!$model) {
@@ -2803,8 +2814,6 @@ SQL;
                 throw new waException("Ошибка чтения архива.".(function_exists('zip_open') ? '' : ' Требуется наличие PHP расширения zlib'));
             }
         }
-
-
         return $result;
     }
 
@@ -3023,6 +3032,32 @@ SQL;
     {
         $upload_dir = wa()->getTempPath(null, 'shop').'/plugins/cml1c';
         if (file_exists($upload_dir)) waFiles::delete($upload_dir);
+    }
+
+    private function isUrl($file)
+    {
+        if (strpos($file, 'http') === 0) return true;
+        return false;
+    }
+
+    private function getDataFromUrl($url)
+    {
+        $ch = curl_init();
+        $timeout = 5;
+        curl_setopt($ch, CURLOPT_URL, $url);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, $timeout);
+        $data = curl_exec($ch);
+        curl_close($ch);
+        return $data;
+    }
+
+    private function getFileNameFromUrl($url)
+    {
+        $keys = parse_url($url);
+        $path = explode("/", $keys['path']); // splitting the path
+        $file_name = end($path); // get the value of the last element
+        return $file_name;
     }
 
     public function __destruct()
