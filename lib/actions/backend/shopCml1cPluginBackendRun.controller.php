@@ -2352,7 +2352,7 @@ SQL;
                 //Значение | ИдЗначения - undocumented feature?
                 $id = self::field($property, 'Ид');
                 $feature = ifset($this->data['map'][self::STAGE_FEATURE][$id]);
-                $value = self::field($property, 'Значение');
+                $value = $this->getRightProductPropertyValue(self::field($property, 'Значение'));
 
                 switch (mb_strtolower($feature['name'], 'utf-8')) {
                     case 'вид номенклатуры':
@@ -3028,6 +3028,7 @@ SQL;
         return $currency;
     }
 
+    //Agronom's code
     private function removeUploadedDirectory()
     {
         $upload_dir = wa()->getTempPath(null, 'shop').'/plugins/cml1c';
@@ -3059,6 +3060,15 @@ SQL;
         $file_name = end($path); // get the value of the last element
         return $file_name;
     }
+
+    private function getRightProductPropertyValue($value)
+    {
+        if($value == "true") return "да";
+        elseif($value == "false") return "нет";
+
+        return $value;
+    }
+    //Agronom's code end
 
     public function __destruct()
     {
